@@ -337,7 +337,7 @@ export default function Page() {
   const containmentTrend = monthlyMetrics['containment'];
 
   const sortedBrains = useMemo(
-    () => [...brains].sort((a, b) => b[brainSort] - a[brainSort]),
+    () => [...brains].sort((a, b) => (b[brainSort] ?? 0) - (a[brainSort] ?? 0)),
     [brainSort]
   );
 

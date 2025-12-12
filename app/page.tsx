@@ -356,7 +356,8 @@ export default function Page() {
           <div className="pill">Dashboard Executivo</div>
           <div className="pill">Mar-Jul (Zendesk) vs Jul-Nov (Moveo)</div>
         </div>
-        <h1>Evolução e Impacto da IA Moveo</h1>
+        <h1 className="client-title">Cliente Aposta Ganha</h1>
+        <h2 className="page-title">Evolução e Impacto da IA Moveo</h2>
         <p className="subtitle">
           Maturidade do agente de IA, ganho de eficiência operacional e performance comparada ao período anterior, evidenciando que a
           operação manteve/expandiu volume mesmo com redução drástica de headcount.
@@ -378,11 +379,6 @@ export default function Page() {
           <small>AHT humano</small>
           <strong>{moveoPeriod.aht.toFixed(1)} min</strong>
           <span className="delta">{ahtDelta.toFixed(1)}% vs Zendesk</span>
-        </div>
-        <div className="kpi">
-          <small>Δ CSAT / Δ Transferência</small>
-          <strong>Preencher CSAT</strong>
-          <span className="delta">Transferência para humano {transferDelta.toFixed(0)}% menor</span>
         </div>
       </section>
 
@@ -596,11 +592,6 @@ export default function Page() {
             </div>
           </div>
           <div className="chart-shell" style={{ display: 'flex', flexDirection: 'column', gap: 12, justifyContent: 'center' }}>
-            <div className="kpi" style={{ background: 'rgba(125, 208, 255, 0.08)', width: '100%' }}>
-              <small>Δ CSAT</small>
-              <strong>Preencher</strong>
-              <span className="delta">substituir pelo valor da pesquisa</span>
-            </div>
             <div className="kpi" style={{ background: 'rgba(158, 240, 201, 0.08)', width: '100%' }}>
               <small>Δ Transferência para humano</small>
               <strong>-{transferDelta.toFixed(0)}%</strong>
@@ -667,7 +658,7 @@ export default function Page() {
         </table>
       </div>
 
-      <div className="footer-note">Dados baseados em dados.csv (linhas 3-31). Ajuste CSAT e cérebros quando os valores reais estiverem disponíveis.</div>
+      <div className="footer-note">Dados baseados em dados.csv (linhas 3-31). Ajuste cérebros quando os valores reais estiverem disponíveis.</div>
     </main>
   );
 }

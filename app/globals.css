@@ -87,6 +87,28 @@ h1 {
   max-width: 720px;
 }
 
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.meta-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.meta-item strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -101,6 +123,11 @@ h1 {
   box-shadow: var(--shadow);
 }
 
+.section-card.highlight {
+  border-color: rgba(125, 208, 255, 0.35);
+  background: linear-gradient(160deg, rgba(125, 208, 255, 0.06), rgba(12, 24, 44, 0.95));
+}
+
 .section-card h2 {
   margin: 0 0 8px;
   font-size: 17px;
@@ -109,6 +136,40 @@ h1 {
 .section-card p.label {
   margin: 0 0 14px;
   color: var(--muted);
+  font-size: 14px;
+}
+
+.section-card p.description {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.mini-title {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.insight-list {
+  display: grid;
+  gap: 12px;
+}
+
+.insight-item {
+  background: rgba(12, 24, 44, 0.7);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.insight-item strong {
+  color: var(--text);
   font-size: 14px;
 }
 
@@ -142,6 +203,12 @@ h1 {
   font-size: 13px;
 }
 
+.kpi-definition {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
 .kpi span.delta.negative {
   color: #ffb3b3;
 }
@@ -161,6 +228,11 @@ h1 {
   height: 240px;
   position: relative;
   overflow: hidden;
+}
+
+.chart-shell.roi-shell {
+  height: auto;
+  min-height: 320px;
 }
 
 .chart-shell .legend {
@@ -207,6 +279,24 @@ h1 {
 
 .bar.secondary {
   background: linear-gradient(180deg, rgba(158, 240, 201, 0.9), rgba(158, 240, 201, 0.2));
+}
+
+.bar-value {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.bar-value.inside {
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  color: #041024;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .bar-labels {
@@ -258,6 +348,19 @@ h1 {
   gap: 10px 12px;
   align-items: center;
   margin: 8px 0 6px;
+}
+
+.definitions {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.definitions strong {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .filter {
@@ -325,6 +428,111 @@ h1 {
 
 .tooltip span {
   color: var(--muted);
+}
+
+.chart-value {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.roi-chart {
+  position: relative;
+  padding: 12px 8px 8px;
+  min-height: 240px;
+}
+
+.roi-bars {
+  display: flex;
+  gap: 26px;
+  align-items: flex-end;
+  position: relative;
+  z-index: 2;
+}
+
+.roi-bar-column {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.roi-bar-stack {
+  width: 80px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
+}
+
+.roi-bar-bg {
+  width: 70px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.roi-bar-actual {
+  width: 70px;
+  background: linear-gradient(180deg, rgba(125, 208, 255, 0.95), rgba(125, 208, 255, 0.25));
+  border-radius: 10px;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.roi-gap-label {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(9, 18, 34, 0.8);
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  color: var(--text);
+  text-align: center;
+  max-width: 140px;
+}
+
+.roi-value {
+  font-size: 12px;
+  color: var(--text);
+}
+
+.roi-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  max-width: 110px;
+}
+
+.roi-line {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.goals {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.goals li {
+  margin-bottom: 6px;
+}
+
+.closing {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 @media (max-width: 720px) {

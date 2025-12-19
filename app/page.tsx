@@ -3,7 +3,7 @@
  */
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   brains,
   headcountByMonth,
@@ -12,27 +12,29 @@ import {
   totalVolumes,
   volumeIaVsHuman,
   zendeskPeriod,
-  monthsOrder,
   type MetricKey
 } from '../lib/dashboardData';
 
 const formatNumber = (value: number) => value.toLocaleString('pt-BR');
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const formatCurrency = (value: number) =>
+  value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
 
 function LineAreaChart({
   data,
   color = '#7dd0ff',
   secondary,
-  height = 210
+  height = 210,
+  valueFormatter
 }: {
   data: { month: string; value: number }[];
   color?: string;
   secondary?: { month: string; value: number }[];
   height?: number;
+  valueFormatter?: (value: number) => string;
 }) {
-  const [tooltip, setTooltip] = useState<{ x: number; y: number; label: string; value: number } | null>(null);
   const padding = 28;
   const width = 700;
+  const formatValue = valueFormatter ?? ((value: number) => `${value}`);
   const maxValue = Math.max(...data.map((d) => d.value), ...(secondary ? secondary.map((d) => d.value) : [0]));
   const stepX = (width - padding * 2) / (data.length - 1 || 1);
 
@@ -77,17 +79,20 @@ function LineAreaChart({
           />
         )}
         {mainPoints.map(([x, y], idx) => (
-          <circle
-            key={idx}
-            cx={x}
-            cy={y}
-            r={5}
+          <circle key={idx} cx={x} cy={y} r={5} fill={color} stroke="var(--panel)" strokeWidth="2" />
+        ))}
+        {data.map((d, idx) => (
+          <text
+            key={`${d.month}-value`}
+            x={padding + idx * stepX}
+            y={Math.max(mainPoints[idx][1] - 12, 16)}
             fill={color}
-            stroke="var(--panel)"
-            strokeWidth="2"
-            onMouseEnter={() => setTooltip({ x, y, label: data[idx].month, value: data[idx].value })}
-            onMouseLeave={() => setTooltip(null)}
-          />
+            fontSize="11"
+            textAnchor="middle"
+            className="chart-value"
+          >
+            {formatValue(d.value)}
+          </text>
         ))}
         {data.map((d, idx) => (
           <text key={d.month} x={padding + idx * stepX} y={height - padding + 16} fill="#93a7c0" fontSize="11" textAnchor="middle">
@@ -95,18 +100,6 @@ function LineAreaChart({
           </text>
         ))}
       </svg>
-      {tooltip && (
-        <div
-          className="tooltip"
-          style={{
-            left: `${(tooltip.x / width) * 100}%`,
-            top: `${(tooltip.y / height) * 100}%`
-          }}
-        >
-          <strong>{tooltip.label}</strong>
-          <span>{tooltip.value}%</span>
-        </div>
-      )}
     </div>
   );
 }
@@ -114,17 +107,18 @@ function LineAreaChart({
 function DualBarChart({
   data,
   primaryLabel,
-  secondaryLabel
+  secondaryLabel,
+  valueFormatter
 }: {
   data: { month: string; ia: number; human: number }[];
   primaryLabel: string;
   secondaryLabel: string;
+  valueFormatter?: (value: number) => string;
 }) {
   const maxValue = Math.max(...data.flatMap((d) => [d.ia, d.human]));
-  const [tooltip, setTooltip] = useState<{ x: number; y: number; label: string; value: number } | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const formatValue = valueFormatter ?? formatNumber;
   return (
-    <div style={{ position: 'relative' }} ref={containerRef}>
+    <div style={{ position: 'relative' }}>
       <div className="legend">
         <span className="badge">
           <span className="dot" style={{ background: 'var(--accent)' }} />
@@ -142,42 +136,18 @@ function DualBarChart({
           return (
             <div key={d.month} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', height: 180 }}>
-                <div
-                  className="bar"
-                  style={{ height: `${iaHeight}px` }}
-                  onMouseEnter={(e) => {
-                    const rect = containerRef.current?.getBoundingClientRect();
-                    if (!rect) return;
-                    const x = clamp(e.clientX - rect.left, 70, rect.width - 70);
-                    const y = clamp(e.clientY - rect.top, 40, rect.height - 40);
-                    setTooltip({ x, y, label: `${d.month} • ${primaryLabel}`, value: d.ia });
-                  }}
-                  onMouseLeave={() => setTooltip(null)}
-                />
-                <div
-                  className="bar secondary"
-                  style={{ height: `${humanHeight}px` }}
-                  onMouseEnter={(e) => {
-                    const rect = containerRef.current?.getBoundingClientRect();
-                    if (!rect) return;
-                    const x = clamp(e.clientX - rect.left, 70, rect.width - 70);
-                    const y = clamp(e.clientY - rect.top, 40, rect.height - 40);
-                    setTooltip({ x, y, label: `${d.month} • ${secondaryLabel}`, value: d.human });
-                  }}
-                  onMouseLeave={() => setTooltip(null)}
-                />
+                <div className="bar" style={{ height: `${iaHeight}px` }}>
+                  <span className="bar-value">{formatValue(d.ia)}</span>
+                </div>
+                <div className="bar secondary" style={{ height: `${humanHeight}px` }}>
+                  <span className="bar-value">{formatValue(d.human)}</span>
+                </div>
               </div>
               <div className="bar-labels">{d.month}</div>
             </div>
           );
         })}
       </div>
-      {tooltip && (
-        <div className="tooltip" style={{ left: tooltip.x, top: tooltip.y }}>
-          <strong>{tooltip.label}</strong>
-          <span>{formatNumber(tooltip.value)}</span>
-        </div>
-      )}
     </div>
   );
 }
@@ -190,10 +160,6 @@ function VolumeVsHeadcountChart() {
   const width = 700;
   const volumeStep = (width - padding * 2) / (totalVolumes.length - 1 || 1);
   const headcountStep = (width - padding * 2) / (headcountByMonth.length - 1 || 1);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [tooltip, setTooltip] = useState<{ x: number; y: number; label: string; value: number; type: 'volume' | 'headcount' } | null>(
-    null
-  );
 
   const volumePoints = totalVolumes.map((d, i) => {
     const x = padding + i * volumeStep;
@@ -212,7 +178,7 @@ function VolumeVsHeadcountChart() {
   const headcountPath = headcountPoints.map((p, idx) => `${idx === 0 ? 'M' : 'L'}${p[0]},${p[1]}`).join(' ');
 
   return (
-    <div style={{ position: 'relative' }} ref={containerRef}>
+    <div style={{ position: 'relative' }}>
       <div className="legend">
         <span className="badge">
           <span className="dot" style={{ background: '#f4c076' }} /> Volumetria total
@@ -239,54 +205,36 @@ function VolumeVsHeadcountChart() {
           strokeDasharray="6 6"
         />
         {volumePoints.map(([x, y], idx) => (
-          <circle
-            key={`vol-${idx}`}
-            cx={x}
-            cy={y}
-            r={5}
-            fill="#f4c076"
-            stroke="var(--panel)"
-            strokeWidth="2"
-            onMouseEnter={() => {
-              const rect = containerRef.current?.getBoundingClientRect();
-              if (!rect) return;
-              const scaledX = (x / width) * rect.width;
-              const scaledY = (y / height) * rect.height;
-              setTooltip({
-                x: clamp(scaledX, 70, rect.width - 70),
-                y: clamp(scaledY, 40, rect.height - 40),
-                label: totalVolumes[idx].month,
-                value: totalVolumes[idx].total,
-                type: 'volume'
-              });
-            }}
-            onMouseLeave={() => setTooltip(null)}
-          />
+          <circle key={`vol-${idx}`} cx={x} cy={y} r={5} fill="#f4c076" stroke="var(--panel)" strokeWidth="2" />
         ))}
         {headcountPoints.map(([x, y], idx) => (
-          <circle
-            key={`hc-${idx}`}
-            cx={x}
-            cy={y}
-            r={5}
+          <circle key={`hc-${idx}`} cx={x} cy={y} r={5} fill="#9ef0c9" stroke="var(--panel)" strokeWidth="2" />
+        ))}
+        {totalVolumes.map((d, idx) => (
+          <text
+            key={`${d.month}-volume`}
+            x={padding + idx * volumeStep}
+            y={Math.max(volumePoints[idx][1] - 12, 16)}
+            fill="#f4c076"
+            fontSize="11"
+            textAnchor="middle"
+            className="chart-value"
+          >
+            {formatNumber(d.total)}
+          </text>
+        ))}
+        {headcountByMonth.map((d, idx) => (
+          <text
+            key={`${d.month}-headcount`}
+            x={padding + idx * headcountStep}
+            y={Math.max(headcountPoints[idx][1] - 12, 16)}
             fill="#9ef0c9"
-            stroke="var(--panel)"
-            strokeWidth="2"
-            onMouseEnter={() => {
-              const rect = containerRef.current?.getBoundingClientRect();
-              if (!rect) return;
-              const scaledX = (x / width) * rect.width;
-              const scaledY = (y / height) * rect.height;
-              setTooltip({
-                x: clamp(scaledX, 70, rect.width - 70),
-                y: clamp(scaledY, 40, rect.height - 40),
-                label: headcountByMonth[idx].month,
-                value: headcountByMonth[idx].value,
-                type: 'headcount'
-              });
-            }}
-            onMouseLeave={() => setTooltip(null)}
-          />
+            fontSize="11"
+            textAnchor="middle"
+            className="chart-value"
+          >
+            {d.value}
+          </text>
         ))}
         {totalVolumes.map((d, idx) => (
           <text key={d.month} x={padding + idx * volumeStep} y={height - padding + 16} fill="#93a7c0" fontSize="11" textAnchor="middle">
@@ -294,14 +242,6 @@ function VolumeVsHeadcountChart() {
           </text>
         ))}
       </svg>
-      {tooltip && (
-        <div className="tooltip" style={{ left: tooltip.x, top: tooltip.y }}>
-          <strong>{tooltip.label}</strong>
-          <span>
-            {tooltip.type === 'volume' ? `${formatNumber(tooltip.value)} atendimentos` : `${tooltip.value} agentes`}
-          </span>
-        </div>
-      )}
     </div>
   );
 }
@@ -327,14 +267,8 @@ export default function Page() {
   const [chartMode, setChartMode] = useState<'line' | 'bar'>('line');
   const [stacked, setStacked] = useState<boolean>(true);
   const [brainSort, setBrainSort] = useState<'conversations' | 'messages' | 'clients'>('conversations');
-  const [tooltipBar, setTooltipBar] = useState<{ x: number; y: number; label: string; value: number } | null>(null);
-  const barMetricRef = useRef<HTMLDivElement>(null);
-  const stackedRef = useRef<HTMLDivElement>(null);
-  const compareRef = useRef<HTMLDivElement>(null);
-  const [tooltipCompare, setTooltipCompare] = useState<{ x: number; y: number; label: string; value: string } | null>(null);
 
   const metricData = monthlyMetrics[metricFilter];
-  const containmentTrend = monthlyMetrics['containment'];
 
   const sortedBrains = useMemo(
     () => [...brains].sort((a, b) => (b[brainSort] ?? 0) - (a[brainSort] ?? 0)),
@@ -349,26 +283,98 @@ export default function Page() {
     }));
   }, [metricData]);
 
+  const roiOldCost = 68000;
+  const roiCurrentCost = 50250.5;
+  const roiSavings = 17749.5;
+  const roiPercent = 59.4;
+  const roiBarHeight = 180;
+  const roiCurrentHeight = (roiCurrentCost / roiOldCost) * roiBarHeight;
+
   return (
     <main>
       <header className="header">
         <div className="headline">
-          <div className="pill">Dashboard Executivo</div>
-          <div className="pill">Mar-Jul (Zendesk) vs Jul-Nov (Moveo)</div>
+          <div className="pill">Relatório Executivo</div>
+          <div className="pill">Dados estimados Nov/25</div>
         </div>
-        <h1 className="client-title">Cliente Aposta Ganha</h1>
-        <h2 className="page-title">Evolução e Impacto da IA Moveo</h2>
+        <h1 className="page-title">Relatório de Eficiência Operacional: Escalabilidade e ROI com a Moveo.AI</h1>
+        <div className="meta-grid">
+          <div className="meta-item">
+            <span>Cliente</span>
+            <strong>Aposta Ganha</strong>
+          </div>
+          <div className="meta-item">
+            <span>Segmento</span>
+            <strong>iGaming</strong>
+          </div>
+          <div className="meta-item">
+            <span>Caso de uso</span>
+            <strong>Suporte ao Cliente</strong>
+          </div>
+        </div>
         <p className="subtitle">
           Maturidade do agente de IA, ganho de eficiência operacional e performance comparada ao período anterior, evidenciando que a
           operação manteve/expandiu volume mesmo com redução drástica de headcount.
         </p>
       </header>
 
+      <div className="section-card highlight">
+        <h2>Principal insight: Resumo de Eficiência Operacional (dados estimados referente ao mês de Nov/25)</h2>
+        <div className="section-grid">
+          <div className="insight-list">
+            <div className="insight-item">
+              <strong>ROI do Investimento em IA</strong>
+              <span>59,4% — Para cada R$ 1,00 investido na Moveo, o cliente economizou R$ 1,59 em folha de pagamento.</span>
+            </div>
+            <div className="insight-item">
+              <strong>Economia Líquida Mensal</strong>
+              <span>R$ 17.749,50 — já descontando o valor total investido com a contratação da plataforma Moveo.ai.</span>
+            </div>
+            <div className="insight-item">
+              <strong>Eficiência de Escala</strong>
+              <span>+28 PAs reduzidos — capacidade de processar 29k sessões com 70% menos equipe humana.</span>
+            </div>
+          </div>
+          <div className="chart-shell roi-shell">
+            <h3 className="mini-title">Gráfico de ROI (Projeção)</h3>
+            <p className="label">Valores em Reais (R$)</p>
+            <div className="roi-chart">
+              <div className="roi-bars">
+                <div className="roi-bar-column">
+                  <div className="roi-bar-stack" style={{ height: roiBarHeight }}>
+                    <div className="roi-bar-bg" style={{ height: roiBarHeight }} />
+                  </div>
+                  <span className="roi-value">{formatCurrency(roiOldCost)}</span>
+                  <span className="roi-label">Custo fixo 40 PAs</span>
+                </div>
+                <div className="roi-bar-column">
+                  <div className="roi-bar-stack" style={{ height: roiBarHeight }}>
+                    <div className="roi-bar-bg" style={{ height: roiBarHeight }} />
+                    <div className="roi-bar-actual" style={{ height: roiCurrentHeight }} />
+                    <div className="roi-gap-label">
+                      Economia: {formatCurrency(roiSavings)} (ROI {roiPercent.toFixed(1)}%)
+                    </div>
+                  </div>
+                  <span className="roi-value">{formatCurrency(roiCurrentCost)}</span>
+                  <span className="roi-label">Custo real atual</span>
+                </div>
+              </div>
+              <svg className="roi-line" viewBox="0 0 320 200" role="img" aria-label="Linha de tendência do ROI">
+                <line x1="70" y1="20" x2="250" y2={20 + (roiBarHeight - roiCurrentHeight)} stroke="#9ef0c9" strokeWidth="3" />
+                <circle cx="70" cy="20" r="5" fill="#9ef0c9" />
+                <circle cx="250" cy={20 + (roiBarHeight - roiCurrentHeight)} r="5" fill="#9ef0c9" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <section className="kpi-cards">
         <div className="kpi">
           <small>Taxa de contenção atual</small>
           <strong>{containmentEnd}%</strong>
           <span className="delta">+{containmentDelta.toFixed(0)} p.p. desde Jul</span>
+          <span className="kpi-definition">A porcentagem de conversas que foram respondidas sem intervenção humana.</span>
         </div>
         <div className="kpi">
           <small>Headcount humano</small>
@@ -385,6 +391,11 @@ export default function Page() {
       <div className="section-card">
         <h2>Seção 1 — Maturidade do Agente de IA (Autonomia)</h2>
         <p className="label">Evolução mensal de Jul a Nov</p>
+        <div className="definitions">
+          <span><strong>Contenção:</strong> A porcentagem de conversas que foram respondidas sem intervenção humana.</span>
+          <span><strong>Cobertura:</strong> A porcentagem de conversas que foram respondidas sem acionar o gatilho desconhecido.</span>
+          <span><strong>% Significativa:</strong> Conversas que obtiveram 2 ou mais interações do agente de IA com o cliente.</span>
+        </div>
         <div className="filters-row">
           <div className="filter">
             <span>Escolha a métrica</span>
@@ -396,8 +407,8 @@ export default function Page() {
                   onClick={() => setMetricFilter(key)}
                 >
                   {key === 'containment' && 'Contenção'}
-                  {key === 'coverage' && 'Coverage'}
-                  {key === 'meaningful' && '% Meaningful'}
+                  {key === 'coverage' && 'Cobertura'}
+                  {key === 'meaningful' && '% Significativa'}
                 </button>
               ))}
             </div>
@@ -419,44 +430,23 @@ export default function Page() {
               <span className="badge">
                 <span className="dot" style={{ background: 'var(--accent)' }} />
                 {metricFilter === 'containment' && 'Taxa de contenção'}
-                {metricFilter === 'coverage' && 'Coverage'}
-                {metricFilter === 'meaningful' && '% Meaningful'}
+                {metricFilter === 'coverage' && 'Cobertura'}
+                {metricFilter === 'meaningful' && '% Significativa'}
               </span>
             </div>
             {chartMode === 'line' ? (
-              <LineAreaChart data={metricData} color="#7dd0ff" />
+              <LineAreaChart data={metricData} color="#7dd0ff" valueFormatter={(value) => `${value}%`} />
             ) : (
               <div>
-                <div className="bar-group" style={{ position: 'relative' }} ref={barMetricRef}>
+                <div className="bar-group" style={{ position: 'relative' }}>
                   {barsForMetric.map((d) => (
                     <div key={d.month} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <div
-                        className="bar"
-                        style={{ height: `${d.height}px` }}
-                        onMouseEnter={(e) => {
-                          const container = barMetricRef.current?.getBoundingClientRect();
-                          if (!container) return;
-                          const x = clamp(e.clientX - container.left, 70, container.width - 70);
-                          const y = clamp(e.clientY - container.top, 40, container.height - 40);
-                          setTooltipBar({ x, y, label: d.month, value: d.value });
-                        }}
-                        onMouseLeave={() => setTooltipBar(null)}
-                      />
+                      <div className="bar" style={{ height: `${d.height}px` }}>
+                        <span className="bar-value">{d.value}%</span>
+                      </div>
                       <div className="bar-labels">{d.month}</div>
                     </div>
                   ))}
-                  {tooltipBar && (
-                    <div
-                      className="tooltip"
-                      style={{
-                        left: tooltipBar.x,
-                        top: tooltipBar.y
-                      }}
-                    >
-                      <strong>{tooltipBar.label}</strong>
-                      <span>{tooltipBar.value}%</span>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -481,7 +471,7 @@ export default function Page() {
                     Humano
                   </span>
                 </div>
-                <div className="bar-group" style={{ position: 'relative' }} ref={stackedRef}>
+                <div className="bar-group" style={{ position: 'relative' }}>
                   {volumeIaVsHuman.map((d) => {
                     const maxValue = Math.max(...volumeIaVsHuman.map((v) => v.ia + v.human));
                     const iaHeight = (d.ia / maxValue) * 170;
@@ -489,40 +479,21 @@ export default function Page() {
                     return (
                       <div key={d.month} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: 180 }}>
-                          <div
-                            className="bar secondary"
-                            style={{ height: `${humanHeight}px`, width: 32 }}
-                            onMouseEnter={(e) => {
-                              const rect = stackedRef.current?.getBoundingClientRect();
-                              if (!rect) return;
-                              const x = clamp(e.clientX - rect.left, 80, rect.width - 80);
-                              const y = clamp(e.clientY - rect.top, 40, rect.height - 40);
-                              setTooltipBar({ x, y, label: `${d.month} • Humano`, value: d.human });
-                            }}
-                            onMouseLeave={() => setTooltipBar(null)}
-                          />
-                          <div className="bar" style={{ height: `${iaHeight}px`, width: 32 }} title={`IA: ${formatNumber(d.ia)}`} />
+                          <div className="bar secondary" style={{ height: `${humanHeight}px`, width: 32 }}>
+                            <span className="bar-value inside">{formatNumber(d.human)}</span>
+                          </div>
+                          <div className="bar" style={{ height: `${iaHeight}px`, width: 32 }}>
+                            <span className="bar-value inside">{formatNumber(d.ia)}</span>
+                          </div>
                         </div>
                         <div className="bar-labels">{d.month}</div>
                       </div>
                     );
                   })}
-                  {tooltipBar && (
-                    <div
-                      className="tooltip"
-                      style={{
-                        left: tooltipBar.x,
-                        top: tooltipBar.y
-                      }}
-                    >
-                      <strong>{tooltipBar.label}</strong>
-                      <span>{formatNumber(tooltipBar.value)}</span>
-                    </div>
-                  )}
                 </div>
               </div>
             ) : (
-              <DualBarChart data={volumeIaVsHuman} primaryLabel="IA" secondaryLabel="Humano" />
+              <DualBarChart data={volumeIaVsHuman} primaryLabel="IA" secondaryLabel="Humano" valueFormatter={formatNumber} />
             )}
           </div>
         </div>
@@ -543,7 +514,7 @@ export default function Page() {
                 {moveoPeriod.label}
               </span>
             </div>
-            <div className="bar-group" style={{ gap: 14, position: 'relative' }} ref={compareRef}>
+            <div className="bar-group" style={{ gap: 14, position: 'relative' }}>
               {[zendeskPeriod, moveoPeriod].map((period, idx) => {
                 const maxVolume = Math.max(zendeskPeriod.totalVolume, moveoPeriod.totalVolume);
                 const maxAht = Math.max(zendeskPeriod.aht, moveoPeriod.aht);
@@ -552,43 +523,17 @@ export default function Page() {
                 return (
                   <div key={period.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', height: 170 }}>
-                      <div
-                        className="bar"
-                        style={{ height: `${volumeHeight}px`, width: 32 }}
-                        onMouseEnter={(e) => {
-                          const rect = compareRef.current?.getBoundingClientRect();
-                          if (!rect) return;
-                          const padding = 140;
-                          const x = clamp(e.clientX - rect.left, padding, rect.width - padding);
-                          const y = clamp(e.clientY - rect.top, 40, rect.height - 40);
-                          setTooltipCompare({ x, y, label: `${period.label} • Volumetria`, value: formatNumber(period.totalVolume) });
-                        }}
-                        onMouseLeave={() => setTooltipCompare(null)}
-                      />
-                      <div
-                        className="bar secondary"
-                        style={{ height: `${ahtHeight}px`, width: 20 }}
-                        onMouseEnter={(e) => {
-                          const rect = compareRef.current?.getBoundingClientRect();
-                          if (!rect) return;
-                          const padding = 140;
-                          const x = clamp(e.clientX - rect.left, padding, rect.width - padding);
-                          const y = clamp(e.clientY - rect.top, 40, rect.height - 40);
-                          setTooltipCompare({ x, y, label: `${period.label} • AHT`, value: `${period.aht.toFixed(1)} min` });
-                        }}
-                        onMouseLeave={() => setTooltipCompare(null)}
-                      />
+                      <div className="bar" style={{ height: `${volumeHeight}px`, width: 32 }}>
+                        <span className="bar-value">{formatNumber(period.totalVolume)}</span>
+                      </div>
+                      <div className="bar secondary" style={{ height: `${ahtHeight}px`, width: 20 }}>
+                        <span className="bar-value">{period.aht.toFixed(1)}m</span>
+                      </div>
                     </div>
                     <div style={{ color: 'var(--muted)', fontSize: 12, textAlign: 'center' }}>{period.label}</div>
                   </div>
                 );
               })}
-              {tooltipCompare && (
-                <div className="tooltip" style={{ left: tooltipCompare.x, top: tooltipCompare.y }}>
-                  <strong>{tooltipCompare.label}</strong>
-                  <span>{tooltipCompare.value}</span>
-                </div>
-              )}
             </div>
           </div>
           <div className="chart-shell" style={{ display: 'flex', flexDirection: 'column', gap: 12, justifyContent: 'center' }}>
@@ -596,6 +541,12 @@ export default function Page() {
               <small>Δ Transferência para humano</small>
               <strong>-{transferDelta.toFixed(0)}%</strong>
               <span className="delta">de 91% (pré) para 38% (atual)</span>
+              <span className="kpi-definition">
+                Nosso potencial foi sendo desenvolvido de forma escalada para que o agente de inteligência artificial fosse treinado e
+                recebesse conteúdo suficiente para auxiliar o cliente mantendo qualidade no atendimento, reduzindo significativamente a
+                transferência para o time de atendimento humano em tarefas repetitivas. Este processo é contínuo para que tenhamos sempre
+                melhoria de qualidade do atendimento.
+              </span>
             </div>
           </div>
         </div>
@@ -604,6 +555,12 @@ export default function Page() {
       <div className="section-card">
         <h2>Seção 3 — Eficiência Operacional</h2>
         <p className="label">Headcount despencando, volume sustentado/crescente</p>
+        <p className="description">
+          Os dados evidenciam o sucesso da nossa estratégia de automação e otimização de processos. A curva divergente — onde o volume
+          sobe e o headcount desce — é o principal indicador de ROI tecnológico. Essa eficiência não comprometeu a entrega; pelo
+          contrário, indica que nossas ferramentas de autoatendimento e processos internos estão filtrando a demanda de forma inteligente,
+          garantindo que o time humano foque apenas em casos de alta complexidade.
+        </p>
         <div className="section-grid">
           <div className="chart-shell">
             <div className="legend">
@@ -612,7 +569,7 @@ export default function Page() {
                 Headcount humano (Jan-Nov)
               </span>
             </div>
-            <LineAreaChart data={headcountByMonth} color="#9ef0c9" />
+            <LineAreaChart data={headcountByMonth} color="#9ef0c9" valueFormatter={(value) => `${value} ag`} />
           </div>
           <div className="chart-shell">
             <VolumeVsHeadcountChart />
@@ -656,6 +613,34 @@ export default function Page() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="section-card">
+        <h2>Inteligência Integrada — Transformando Diálogos em Transações Automáticas</h2>
+        <p className="label">Próxima evolução da jornada com a IA Moveo</p>
+        <p className="description">
+          Até este momento, nossa jornada com a IA Moveo foi marcada por um salto em escalabilidade. Conseguimos reduzir o time de
+          atendimento humano em 70% (de 40 para 12 agentes) enquanto absorvemos volumes crescentes de demanda, mantendo uma operação 24/7
+          de alta qualidade. No entanto, os dados de &quot;Eficiência por tipo de agente&quot; revelam que estamos em uma fase na qual
+          podemos ultrapassar o limite no qual um agente de IA informativo pode realizar. Temas como Transações e Bônus já somam mais de
+          220 mil mensagens. O volume de &quot;Handover&quot; (29 mil conversas) não é um reflexo de falha na IA, mas sim da ausência de
+          autonomia sistêmica: a IA entende o que o cliente quer, mas hoje não possui permissão técnica para executar a solução sozinha.
+        </p>
+        <h3 className="mini-title">O Próximo Passo: da conversa à resolução (Agente Resolutivo)</h3>
+        <p className="description">
+          Para quebrar a barreira atual de contenção (62%) e reduzir ainda mais o transbordo para o time humano, o foco estratégico deve
+          migrar para Inteligência Aplicada a Integrações. Nossos objetivos são:
+        </p>
+        <ul className="goals">
+          <li>Integração de APIs de Transações: Permitir que a IA verifique status de depósitos, saques e falhas de pagamento em tempo real, eliminando consultas manuais.</li>
+          <li>Automação de KYC e Conta: Integrar sistemas de verificação de documentos para que a IA valide e informe pendências de cadastro instantaneamente.</li>
+          <li>Gestão Ativa de Bônus: Conectar o &quot;Cérebro de Bônus&quot; ao banco de dados promocional para personalização de ofertas e resolução de dúvidas sobre requisitos de aposta (rollover).</li>
+          <li>Redução de Fricção no &quot;Router&quot;: Refinar o roteamento inicial para entender cada vez melhor o problema antes que o cliente seja direcionado imediatamente para um fluxo, reduzindo o número de ruídos neste processo.</li>
+        </ul>
+        <p className="closing">
+          A fase de prova de conceito e ganho de escala está sendo um sucesso. Agora, o futuro da Aposta Ganha reside na Simbiose
+          Sistêmica: onde a IA não é apenas uma interface, mas o motor que executa a operação.
+        </p>
       </div>
 
       <div className="footer-note">Dados baseados em dados.csv (linhas 3-31). Ajuste cérebros quando os valores reais estiverem disponíveis.</div>

@@ -235,6 +235,24 @@ h1 {
   min-height: 320px;
 }
 
+.roi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.roi-badge {
+  background: linear-gradient(120deg, rgba(244, 192, 118, 0.25), rgba(158, 240, 201, 0.18));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
 .chart-shell .legend {
   display: flex;
   gap: 14px;
@@ -441,6 +459,40 @@ h1 {
   min-height: 240px;
 }
 
+.roi-impact {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(260px, 2fr);
+  gap: 18px;
+  align-items: center;
+}
+
+.roi-hero {
+  background: radial-gradient(circle at top, rgba(125, 208, 255, 0.18), rgba(12, 24, 44, 0.8));
+  border: 1px solid rgba(125, 208, 255, 0.3);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+
+.roi-hero-label {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.roi-hero strong {
+  font-size: 26px;
+  color: var(--text);
+}
+
+.roi-hero-note {
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .roi-bars {
   display: flex;
   gap: 26px;
@@ -456,7 +508,7 @@ h1 {
 }
 
 .roi-bar-stack {
-  width: 80px;
+  width: 110px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -464,15 +516,14 @@ h1 {
 }
 
 .roi-bar-bg {
-  width: 70px;
-  background: rgba(255, 255, 255, 0.12);
+  width: 92px;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.roi-bar-actual {
-  width: 70px;
-  background: linear-gradient(180deg, rgba(125, 208, 255, 0.95), rgba(125, 208, 255, 0.25));
+.roi-bar-fill {
+  width: 92px;
   border-radius: 10px;
   position: absolute;
   bottom: 0;
@@ -480,31 +531,50 @@ h1 {
   transform: translateX(-50%);
 }
 
-.roi-gap-label {
+.roi-bar-old {
+  background: linear-gradient(180deg, rgba(126, 135, 150, 0.9), rgba(126, 135, 150, 0.2));
+}
+
+.roi-bar-actual {
+  background: linear-gradient(180deg, rgba(125, 208, 255, 0.95), rgba(125, 208, 255, 0.25));
+}
+
+.roi-gap {
   position: absolute;
   top: 10px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(9, 18, 34, 0.8);
+  background: rgba(9, 18, 34, 0.9);
   border: 1px solid var(--border);
   padding: 6px 8px;
   border-radius: 10px;
   font-size: 11px;
   color: var(--text);
   text-align: center;
-  max-width: 140px;
+  max-width: 160px;
+  display: grid;
+  gap: 2px;
 }
 
-.roi-value {
-  font-size: 12px;
-  color: var(--text);
+.roi-gap strong {
+  font-size: 13px;
+  color: var(--accent-2);
 }
 
-.roi-label {
+.roi-bar-tag {
+  position: absolute;
+  bottom: -38px;
   font-size: 11px;
   color: var(--muted);
   text-align: center;
-  max-width: 110px;
+  max-width: 100px;
+}
+
+.roi-bar-value {
+  position: absolute;
+  bottom: -20px;
+  font-size: 12px;
+  color: var(--text);
 }
 
 .roi-line {
@@ -542,5 +612,18 @@ h1 {
 
   h1 {
     font-size: 24px;
+  }
+
+  .roi-impact {
+    grid-template-columns: 1fr;
+  }
+
+  .roi-bar-stack {
+    width: 90px;
+  }
+
+  .roi-bar-bg,
+  .roi-bar-fill {
+    width: 76px;
   }
 }

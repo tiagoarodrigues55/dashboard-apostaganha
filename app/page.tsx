@@ -336,34 +336,54 @@ export default function Page() {
             </div>
           </div>
           <div className="chart-shell roi-shell">
-            <h3 className="mini-title">Gráfico de ROI (Projeção)</h3>
-            <p className="label">Valores em Reais (R$)</p>
-            <div className="roi-chart">
-              <div className="roi-bars">
-                <div className="roi-bar-column">
-                  <div className="roi-bar-stack" style={{ height: roiBarHeight }}>
-                    <div className="roi-bar-bg" style={{ height: roiBarHeight }} />
-                  </div>
-                  <span className="roi-value">{formatCurrency(roiOldCost)}</span>
-                  <span className="roi-label">Custo fixo 40 PAs</span>
-                </div>
-                <div className="roi-bar-column">
-                  <div className="roi-bar-stack" style={{ height: roiBarHeight }}>
-                    <div className="roi-bar-bg" style={{ height: roiBarHeight }} />
-                    <div className="roi-bar-actual" style={{ height: roiCurrentHeight }} />
-                    <div className="roi-gap-label">
-                      Economia: {formatCurrency(roiSavings)} (ROI {roiPercent.toFixed(1)}%)
+            <div className="roi-header">
+              <div>
+                <h3 className="mini-title">Gráfico de ROI (Projeção)</h3>
+                <p className="label">Valores em Reais (R$)</p>
+              </div>
+              <div className="roi-badge">ROI {roiPercent.toFixed(1)}%</div>
+            </div>
+            <div className="roi-impact">
+              <div className="roi-hero">
+                <span className="roi-hero-label">Economia líquida mensal</span>
+                <strong>{formatCurrency(roiSavings)}</strong>
+                <span className="roi-hero-note">Ganho de {formatCurrency(roiOldCost - roiCurrentCost)} frente ao custo fixo.</span>
+              </div>
+              <div className="roi-chart">
+                <div className="roi-bars">
+                  <div className="roi-bar-column">
+                    <div className="roi-bar-stack" style={{ height: roiBarHeight }}>
+                      <div className="roi-bar-bg" style={{ height: roiBarHeight }} />
+                      <div className="roi-bar-fill roi-bar-old" style={{ height: roiBarHeight }} />
+                      <span className="roi-bar-tag">Custo fixo 40 PAs</span>
+                      <span className="roi-bar-value">{formatCurrency(roiOldCost)}</span>
                     </div>
                   </div>
-                  <span className="roi-value">{formatCurrency(roiCurrentCost)}</span>
-                  <span className="roi-label">Custo real atual</span>
+                  <div className="roi-bar-column">
+                    <div className="roi-bar-stack" style={{ height: roiBarHeight }}>
+                      <div className="roi-bar-bg" style={{ height: roiBarHeight }} />
+                      <div className="roi-bar-fill roi-bar-actual" style={{ height: roiCurrentHeight }} />
+                      <div className="roi-gap">
+                        <span>Ganho de ROI</span>
+                        <strong>{formatCurrency(roiSavings)}</strong>
+                      </div>
+                      <span className="roi-bar-tag">Custo real atual</span>
+                      <span className="roi-bar-value">{formatCurrency(roiCurrentCost)}</span>
+                    </div>
+                  </div>
                 </div>
+                <svg className="roi-line" viewBox="0 0 320 220" role="img" aria-label="Linha de tendência do ROI">
+                  <defs>
+                    <linearGradient id="roi-line" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#f4c076" />
+                      <stop offset="100%" stopColor="#9ef0c9" />
+                    </linearGradient>
+                  </defs>
+                  <line x1="60" y1="30" x2="260" y2={30 + (roiBarHeight - roiCurrentHeight)} stroke="url(#roi-line)" strokeWidth="4" />
+                  <circle cx="60" cy="30" r="6" fill="#f4c076" />
+                  <circle cx="260" cy={30 + (roiBarHeight - roiCurrentHeight)} r="6" fill="#9ef0c9" />
+                </svg>
               </div>
-              <svg className="roi-line" viewBox="0 0 320 200" role="img" aria-label="Linha de tendência do ROI">
-                <line x1="70" y1="20" x2="250" y2={20 + (roiBarHeight - roiCurrentHeight)} stroke="#9ef0c9" strokeWidth="3" />
-                <circle cx="70" cy="20" r="5" fill="#9ef0c9" />
-                <circle cx="250" cy={20 + (roiBarHeight - roiCurrentHeight)} r="5" fill="#9ef0c9" />
-              </svg>
             </div>
           </div>
         </div>
